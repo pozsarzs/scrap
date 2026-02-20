@@ -25,8 +25,8 @@ The telegram is structured the same for both a request and a response:
 | 1-2| hh |header for bit-syncronization and framing          |
 |   3|  a |high nibble = device address (0-F)                 |
 |   3|  c |low nibble = command code (0-F)                    |
-|   4| nn |number of data bytes (0-FF).                       |
-|   5| ee |error code                                         |
+|   4| nn |number of data bytes (00-FF)                       |
+|   5| ee |error code (00-FF)                                 |
 |  5-| dd |data                                               |
 |last| ss |checksum                                           |
 
@@ -42,9 +42,9 @@ determines the direction of the telegram:
 ### Address (a)
 
 The _high nibble_ of the 3rd byte is the uniqe ID of the client:
-- _Address 0_ is reserved for point-to-point mode. In this case, the receiving side
-does not perform address checking, so all devices respond to the request. Do not
-use address 0 in multi-client mode.
+- _Address 0_ is reserved for point-to-point mode. In this case, the receiving
+  side does not perform address checking, so all devices respond to the request.
+  Do not use address 0 in multi-client mode.
 - _Addresses 1-F_ are addresses that can be used in multi-client mode.
 
 
@@ -62,9 +62,9 @@ operations to be performed on the 256-byte data table.:
 
 ### Number of data bytes (nn)
 
-Number of transmitted data bytes (00-FF). If the response contains no data, then
-this number is 01 and the data byte is 00. If the request was incorrect, then
-this number in the response is 00 and the data byte is the error code.
+Number of transmitted data bytes. If the response contains no data, then
+this number is 01h and the data byte is 00h. If the request was incorrect, then
+this number in the response is 00h and the data byte is the error code.
 
 ### Data bytes (dd)
 
@@ -72,7 +72,7 @@ Transmitted data bytes or error code.
 
 ### Error code (ee)
 
-If the data length in the response is 00, then the first and only data byte is
+If the data length in the response is 00h, then the first and only data byte is
 one of the following error codes:
 
 - _01h_: Integrity check failed.
@@ -90,7 +90,7 @@ one of the following error codes:
 |function               |telegram                    |a|c|n |d          |ss|note|
 |-----------------------|----------------------------|-|-|--|-----------|--|----|
 |query client version   |`55 AA 60 00 60`            |6|0|00|           |60|[1] |
-|- succesful query      |`AA 55 60 02 22 11 95`      |6|0|02|22 95      |51|[2] |
+|- succesful query      |`AA 55 60 02 22 11 95`      |6|0|02|22 95      |95|[2] |
 |- unsuccesful query    |`AA 55 60 00 02 62`         |6|0|00|02         |62|[3] |
 |direct data table read |`55 AA 01 02 0A 10 1D`      |0|1|02|0A 10      |1D|[4] |
 |- succesful read       |`AA 55 01 07 FF .. FF 01`   |0|1|07|FF .. FF   |01|[5] |
@@ -117,5 +117,9 @@ one of the following error codes:
 
 ## 4. Implementations
 
-(..)
+The following assembly implementations are under development and will be
+available soon as linkable .REL files:
 
+- _Intel 8080_: Targeted for CP/M OS,
+- _Zilog Z80_: Targeted for CP/M OS,
+- _Intel 8051_: Generic assembly implementation.
