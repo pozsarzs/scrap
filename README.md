@@ -1,6 +1,5 @@
-<img align="left" style="height:64px; float: left; margin: 0 10px 0 0;" alt="Z80 inside"
+<img align="left" style="height:64px; float: left;  margin: 0 0 0 0;" alt="logo"
   src="logo.svg">
-<br>
 
 # SCRAP
 **Synchronized Client Register Access Protocol** 
