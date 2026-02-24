@@ -1,29 +1,53 @@
 # SCRAP
 **Synchronized Client Register Access Protocol** 
 
+## Used terms
+
+- **Command:** An instruction sent to a remote node requesting execution of a
+  specific operation.
+- **Command Code:** The command number, of which the first three are common,
+  predefined commands, all others are user-created.  
+- **Data Table:** A fixed-size internal data structure storing device parameters.
+- **Entry:** A single byte size data element within the data table.
+- **Error Code:** The value returned by node if the command or the data passed
+  was incorrect.
+- **Index:** The numerical position identifying an entry inside the data table.
+- **Message:** A structured unit of data transmitted over the communication link.
+- **Multi-Client Mode:** An operating mode in which multiple clients can be
+  present on the same serial line, but the master communicates with only one at
+  a time (RS-485).
+- **Node ID:** A unique identifier used to address a device on the communication
+  bus.
+- **Response:** A message returned by a node containing the result or status of
+  a executed command.
+- **Single-Client Mode:** An operating mode in which only one client can be
+  present on the same serial line (RS-232, RS-485).
+  
+
 ## 1. Concept
 
-- Goal: simple, assembly-implementable, low-resource binary protocol for serial
-  connection of retro MCUs and CPUs.
-- Connection: master-client based, single- or multi-client connection.
-- Data model: remote shared memory principle. There is a 256-byte data table on
-  each side (one for each unique identifier). The application only sees and
-  handles these tables. Cell permissions (Disable, RO, WO, RW) are "hardwired"
+- **Goal:** simple, assembly-implementable, low-resource binary protocol for
+  serial connection of retro MCUs and CPUs.
+- **Connection:** master-client based, single- or multi-client connection on
+  RS-232 or RS-485 serial line.
+- **Data model:** remote shared memory principle. There is a 256-byte data
+  table on each side (one for each Node ID). The application only sees and
+  handles these tables. Entry permissions (Disable, RO, WO, RW) are "hardwired"
   into the firmware on the client side.
-- Operation mode: remote command call.
+- **Operation mode:** remote command call.
 
 
-## 2. Telegram structure
+## 2. Message structure
 
-The telegram is structured the same for both a request and a response:
+The message is structured the same for both a command and a response:
 
-`hh hh ac nn dd...dd ss`
-`hh hh ac 00 ee ss`
+`hh hh ic nn dd...dd ss`
+`hh hh ic 00 ee ss`
 
 |byte|sign|description                                        |
 |---:|:--:|---------------------------------------------------|
 | 1-2| hh |header for bit-syncronization and framing          |
-|   3|  a |high nibble = device address (0-F)                 |
+|   3|  i |high nibble = node ID (0-F)                        |
 |   3|  c |low nibble = command code (0-F)                    |
 |   4| nn |number of data bytes (00-FF)                       |
 |   5| ee |error code (00-FF)                                 |
@@ -39,13 +63,13 @@ determines the direction of the telegram:
 - _response_: AAh 55h.  
 
 
-### Address (a)
+### Node ID (i)
 
-The _high nibble_ of the 3rd byte is the uniqe ID of the client:
-- _Address 0_ is reserved for point-to-point mode. In this case, the receiving
-  side does not perform address checking, so all devices respond to the request.
-  Do not use address 0 in multi-client mode.
-- _Addresses 1-F_ are addresses that can be used in multi-client mode.
+The _high nibble_ of the 3rd byte is the node ID of the client:
+- _Node ID 0_ is reserved for point-to-point mode. In this case, the receiving
+  side does not perform node ID checking, so all devices respond to the command.
+  Do not use node ID 0 in multi-client mode.
+- _Node ID 1-F_ are node IDs that can be used in multi-client mode.
 
 
 ### Command \(c\)
@@ -79,6 +103,9 @@ one of the following error codes:
 - _02h_: Command not supported.
 - _03h_: Data length mismatch for the given command.
 - _04h_: Permission denied (e.g., writing to RO cell).
+- _FFh_: Command not implemented. Internal value, not returned by the client.
+  In this case, the Carry flag also changes to 1.
+
 
 ### Checksum (ss)
 
@@ -103,16 +130,16 @@ one of the following error codes:
 |- response without data|`AA 55 7C 01 00 7D`         |7|C|01|00         |7D|[10]|
 |- response with error  |`AA 55 7C 00 02 7E`         |7|C|00|02         |7E|[3] |
 
-[1]: Multi-client mode, address = 06h.  
+[1]: Multi-client mode, node ID = 06h.  
 [2]: Successful query, version = 2211h.  
 [3]: Unsuccesful operation, error code in the data byte.  
 [4]: Single-client mode, read bytes from cells 0A-10h (7 byte).  
 [5]: Succesful read, data are 7 bytes.  
 [6]: Single-client mode, write 3 bytes from cells 0Ah (to 0Ch).  
 [7]: Succesful write, no data bytes received.  
-[8]: Multi-client mode, address = 07h, command = Ch, 3 data bytes transferred.  
-[9]: Multi-client mode, address = 07h, command = Ch, 2 data bytes received.  
-[10]: Multi-client mode, address = 07h, command = Ch, no data bytes received.  
+[8]: Multi-client mode, node ID = 07h, command = Ch, 3 data bytes transferred.  
+[9]: Multi-client mode, node ID = 07h, command = Ch, 2 data bytes received.  
+[10]: Multi-client mode, node ID = 07h, command = Ch, no data bytes received.  
 
 
 ## 4. Implementations
@@ -120,6 +147,16 @@ one of the following error codes:
 The following assembly implementations are under development and will be
 available soon as linkable .REL files:
 
-- _Intel 8080_: Targeted for CP/M OS,
-- _Zilog Z80_: Targeted for CP/M OS,
-- _Intel 8051_: Generic assembly implementation.
+- _Intel 8080_: Master, targeted for CP/M OS,
+- _Zilog Z80_: Master, targeted for CP/M OS,
+- _Intel 8051_: Client, generic assembly implementation.
+
+According to the protocol logic, the Z80 machine plays the role of master, and
+the MCU plays the role of client. For this reason, the package does not include
+client-side software for the Z80 or master code for the MCU by default. If your
+system requires special requirements, you can implement them individually under
+the EUPL license. You can submit the implementations in this way as a pull
+request to the project repo, and if accepted, they will be published in the
+official source code. I also welcome and publish implementations written for
+other processors.
+

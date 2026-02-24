@@ -1,0 +1,34 @@
+SCRAP
+~~~~~
+
+  version	v0.1
+  licence	EUPL v1.2
+  architecture	i8080
+  OS		CP/M-80
+  compiler	Digital Research CP/M assembler v2.0 (1978)
+  author	Pozsar Zsolt <pozsarzs@gmail.com> (2026)
+
+This is a collection of routines of the Synchronized Client Register Access
+Protocol.
+
+
+File naming convention
+~~~~~~~~~~~~~~~~~~~~~~
+
+  scrap-s.asm	common commands 0-2h
+  u0000-s.asm	user commands 3-Fh
+
+  0000: version of the command collection (0000-FFFFh)
+  s:	side, (m)aster or (c)lient
+
+
+Available functions
+~~~~~~~~~~~~~~~~~~~
+
+Master side:
+
+A	B	C	DE			functions		A		HL
+-----------------------------------------------------------------------------------------------
+N/A	N/A	N/A	N/A			query client version	Error code	version
+Node ID	Entry	Count	Data table address	direct entry read	Error code	N/A
+Node ID Entry	Count	Data table address	direct entry write	Error code	N/A
