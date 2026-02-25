@@ -5,28 +5,33 @@
 **Synchronized Client Register Access Protocol** 
 
 ## Used terms
-
-- **Command:** An instruction sent to a remote node requesting execution of a
-  specific operation.
-- **Command Code:** The command number, of which the first three are common,
-  predefined commands, all others are user-created.  
 - **Data Table:** A fixed-size internal data structure storing device parameters.
-- **Entry:** A single byte size data element within the data table.
-- **Error Code:** The value returned by node if the command or the data passed
-  was incorrect.
-- **Index:** The numerical position identifying an entry inside the data table.
+  - **Entry:** A single byte size data element within the data table.
+  - **Index:** The numerical position identifying an entry inside the data table.
+  - **RWS:** Starting byte of the read/write area (1st area) in the data table.
+    Default value is 00h.
+  - **ROS:** Starting byte of the read-only area (2nd area) in the data table.
+    Default value is 7Fh.
+  - **DAS:** Starting byte of the disabled area (3rd area) in the data table.
+    Default value is FFh.
 - **Message:** A structured unit of data transmitted over the communication link.
+  - **Command:** An instruction sent to a remote node requesting execution of a
+    a executed command.
+  - **Response:** A message returned by a node containing the result or status of
+    specific operation.
+    - **Command Code:** The command number, of which the first three are common,
+    predefined commands, all others are user-created.  
+    - **Error Code:** The value returned by node if the command or the data passed
+    was incorrect.
+    - **Node ID:** A unique identifier used to address a device on the communication
+    bus.
 - **Multi-Client Mode:** An operating mode in which multiple clients can be
   present on the same serial line, but the master communicates with only one at
   a time (RS-485).
-- **Node ID:** A unique identifier used to address a device on the communication
-  bus.
-- **Response:** A message returned by a node containing the result or status of
-  a executed command.
 - **Single-Client Mode:** An operating mode in which only one client can be
   present on the same serial line (RS-232, RS-485).
+ 
   
-
 ## 1. Concept
 
 - **Goal:** simple, assembly-implementable, low-resource binary protocol for
@@ -35,8 +40,11 @@
   RS-232 or RS-485 serial line.
 - **Data model:** remote shared memory principle. There is a 256-byte data
   table on each side (one for each Node ID). The application only sees and
-  handles these tables. Entry permissions (Disable, RO, WO, RW) are "hardwired"
-  into the firmware on the client side.
+  handles these tables. Entry permissions (R/W, RO, Disabled) are "hardwired"
+  into the firmware on the client side. Entries with the same permissions would
+  form contiguous areas in the data table. The lowest area is R/W, the next is
+  RO, the top is Disabled. The client configuration must always specify the
+  starting byte of the next area.
 - **Operation mode:** remote command call.
 
 
@@ -79,8 +87,8 @@ The _high nibble_ of the 3rd byte is the node ID of the client:
 The _low nibble_ of the 3rd byte is the command code. The commands specify the
 operations to be performed on the 256-byte data table.:
 - _Command 0_ queries the client version. The response contains the 16-bit
-  version number that specifies the client's command set and the permissions
-  for the data table cells.
+  version number that specifies the client's command set and the value of ROS
+  and DAS.
 - _Command 1_ reads the cells of the data table directly.
 - _Command 2_ writes the cells of the data table directly.
 - _Command 3-F_: User defined, version-dependent individual operations (e.g. block
@@ -120,7 +128,7 @@ one of the following error codes:
 |function               |telegram                    |a|c|n |d          |ss|note|
 |-----------------------|----------------------------|-|-|--|-----------|--|----|
 |query client version   |`55 AA 60 00 60`            |6|0|00|           |60|[1] |
-|- succesful query      |`AA 55 60 02 22 11 95`      |6|0|02|22 95      |95|[2] |
+|- succesful query      |`AA 55 60 02 22 11 7F FF 5F`|6|0|02|22 11 7F FF|5F|[2] |
 |- unsuccesful query    |`AA 55 60 00 02 62`         |6|0|00|02         |62|[3] |
 |direct data table read |`55 AA 01 02 0A 10 1D`      |0|1|02|0A 10      |1D|[4] |
 |- succesful read       |`AA 55 01 07 FF .. FF 01`   |0|1|07|FF .. FF   |01|[5] |
@@ -133,7 +141,7 @@ one of the following error codes:
 |- response without data|`AA 55 7C 01 00 7D`         |7|C|01|00         |7D|[10]|
 |- response with error  |`AA 55 7C 00 02 7E`         |7|C|00|02         |7E|[3] |
 
-[1]: Multi-client mode, node ID = 06h.  
+[1]: Multi-client mode, node ID = 06h, ROS = 7Fh, DAS = FFh.  
 [2]: Successful query, version = 2211h.  
 [3]: Unsuccesful operation, error code in the data byte.  
 [4]: Single-client mode, read bytes from cells 0A-10h (7 byte).  
