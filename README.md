@@ -1,5 +1,4 @@
-<img align="left" style="height:64px; float: left;  margin: 0 0 0 0;" alt="logo"
-  src="logo.svg">
+<img align="left" style="height:64px; float: left;  margin: 0 0 0 0;" alt="logo" src="logo.svg">
 
 # SCRAP
 **Synchronized Client Register Access Protocol** 
