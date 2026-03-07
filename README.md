@@ -5,6 +5,7 @@
 **Synchronized Client Register Access Protocol** 
 
 ## Used terms
+
 - **Data Table:** A fixed-size internal data structure storing device parameters.
   - **Entry:** A single byte size data element within the data table.
   - **Index:** The numerical position identifying an entry inside the data table.
@@ -30,8 +31,7 @@
   a time (RS-485).
 - **Single-Client Mode:** An operating mode in which only one client can be
   present on the same serial line (RS-232, RS-485).
- 
-  
+
 ## 1. Concept
 
 - **Goal:** simple, assembly-implementable, low-resource binary protocol for
@@ -47,7 +47,6 @@
   starting byte of the next area.
 - **Operation mode:** remote command call.
 
-
 ## 2. Message structure
 
 The message is structured the same for both a command and a response:
@@ -55,15 +54,15 @@ The message is structured the same for both a command and a response:
 `hh hh ic nn dd...dd ss`
 `hh hh ic 00 ee ss`
 
-|byte|sign|description                                        |
-|---:|:--:|---------------------------------------------------|
-| 1-2| hh |header for bit-syncronization and framing          |
-|   3|  i |high nibble = node ID (0-F)                        |
-|   3|  c |low nibble = command code (0-F)                    |
-|   4| nn |number of data bytes (00-FF)                       |
-|   5| ee |error code (00-FF)                                 |
-|  5-| dd |data                                               |
-|last| ss |checksum                                           |
+|byte|sign|description                              |
+|---:|:--:|-----------------------------------------|
+| 1-2| hh |header for bit-syncronization and framing|
+|   3|  i |high nibble = node ID (0-F)              |
+|   3|  c |low nibble = command code (0-F)          |
+|   4| nn |number of data bytes (00-FF)             |
+|   5| ee |error code (00-FF)                       |
+|  5-| dd |data                                     |
+|last| ss |checksum                                 |
 
 ### Header (hh hh)
 
@@ -73,19 +72,20 @@ determines the direction of the telegram:
 - _request_: 55h AAh,  
 - _response_: AAh 55h.  
 
-
 ### Node ID (i)
 
 The _high nibble_ of the 3rd byte is the node ID of the client:
+
 - _Node ID 0_ is reserved for point-to-point mode. In this case, the receiving
   side does not perform node ID checking, so all devices respond to the command.
   Do not use node ID 0 in multi-client mode.
 - _Node ID 1-F_ are node IDs that can be used in multi-client mode.
 
+### Command (c)
 
-### Command \(c\)
 The _low nibble_ of the 3rd byte is the command code. The commands specify the
 operations to be performed on the 256-byte data table.:
+
 - _Command 0_ queries the client version. The response contains the 16-bit
   version number that specifies the client's command set and the value of ROS
   and DAS.
@@ -93,7 +93,6 @@ operations to be performed on the 256-byte data table.:
 - _Command 2_ writes the cells of the data table directly.
 - _Command 3-F_: User defined, version-dependent individual operations (e.g. block
   write/read), where the source and destination are always the data table.
-
 
 ### Number of data bytes (nn)
 
@@ -117,11 +116,9 @@ one of the following error codes:
 - _FFh_: Command not implemented. Internal value, not returned by the client.
   In this case, the Carry flag also changes to 1.
 
-
 ### Checksum (ss)
 
 8-bit Modulo 256 sum of the bytes after the header.
-
 
 ## 3. Examples
 
@@ -152,7 +149,6 @@ one of the following error codes:
 [9]: Multi-client mode, node ID = 07h, command = Ch, 2 data bytes received.  
 [10]: Multi-client mode, node ID = 07h, command = Ch, no data bytes received.  
 
-
 ## 4. Implementations
 
 The following assembly implementations are under development and will be
@@ -170,4 +166,3 @@ the EUPL license. You can submit the implementations in this way as a pull
 request to the project repo, and if accepted, they will be published in the
 official source code. I also welcome and publish implementations written for
 other processors.
-
